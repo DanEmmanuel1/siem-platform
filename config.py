@@ -26,6 +26,6 @@ DEFAULT_TARGET = "127.0.0.1"
 SCAN_INTERVAL_HOURS = 6
 EMAIL_ALERTS = True
 
-VERSION = "1.0"
+VERSION = "2.0"
 AUTHOR = "Emmanuel Dan"
 GITHUB = "github.com/DanEmmanuel1"

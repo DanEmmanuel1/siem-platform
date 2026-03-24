@@ -9,6 +9,7 @@ from rich.panel import Panel
 from rich.table import Table
 from config import TOOLS, VERSION, AUTHOR, GITHUB, DEFAULT_TARGET
 from reporter import generate_status_report, generate_summary
+from correlator import run_correlation_engine
 
 console = Console()
 
@@ -29,20 +30,21 @@ def print_help():
         show_header=True,
         header_style="bold magenta"
     )
-    table.add_column("Command", style="cyan", width=40)
+    table.add_column("Command", style="cyan", width=45)
     table.add_column("Description", style="white", width=45)
 
     commands = [
-        ("py siem.py --scan network [IP]",      "Audit network config & open ports"),
-        ("py siem.py --scan passwords",          "Analyze password strength & breaches"),
-        ("py siem.py --scan files",              "Monitor file integrity changes"),
-        ("py siem.py --scan logs",               "Analyze Windows Event Log threats"),
-        ("py siem.py --scan vulnerabilities [IP]","Scan for vulnerabilities"),
-        ("py siem.py --scan all [IP]",           "Run all 5 tools sequentially"),
-        ("py siem.py --dashboard",               "Launch SIEM web dashboard"),
-        ("py siem.py --schedule",                "Start automated scheduled scans"),
-        ("py siem.py --status",                  "Show last scan results summary"),
-        ("py siem.py --help",                    "Show this help menu"),
+        ("py siem.py --scan network [IP]",        "Audit network config & open ports"),
+        ("py siem.py --scan passwords",            "Analyze password strength & breaches"),
+        ("py siem.py --scan files",                "Monitor file integrity changes"),
+        ("py siem.py --scan logs",                 "Analyze Windows Event Log threats"),
+        ("py siem.py --scan vulnerabilities [IP]", "Scan for vulnerabilities"),
+        ("py siem.py --scan all [IP]",             "Run all 5 tools sequentially"),
+        ("py siem.py --correlate",                 "Run correlation engine across all tools"),
+        ("py siem.py --dashboard",                 "Launch SIEM web dashboard"),
+        ("py siem.py --schedule",                  "Start automated scheduled scans"),
+        ("py siem.py --status",                    "Show last scan results summary"),
+        ("py siem.py --help",                      "Show this help menu"),
     ]
 
     for cmd, desc in commands:
@@ -58,15 +60,14 @@ def run_tool(tool_name, args=[]):
         console.print(f"[yellow]Update config.py with the correct path[/yellow]")
         return False
 
-    # Find the main script for each tool
     scripts = {
-        "network":        "auditor.py",
-        "passwords":      "analyzer.py",
-        "files":          "monitor.py",
-        "logs":           "analyzer.py",
+        "network":         "auditor.py",
+        "passwords":       "analyzer.py",
+        "files":           "monitor.py",
+        "logs":            "analyzer.py",
         "vulnerabilities": "scanner.py",
-        "dashboard":      "app.py",
-        "schedule":       "scheduler.py",
+        "dashboard":       "app.py",
+        "schedule":        "scheduler.py",
     }
 
     script = scripts.get(tool_name)
@@ -103,10 +104,10 @@ def run_all(target=None):
 
     tools_to_run = ["network", "logs", "files", "vulnerabilities"]
     args_map = {
-        "network": [target] if target else [],
+        "network":         [target] if target else [],
         "vulnerabilities": [target] if target else [],
-        "logs": [],
-        "files": [],
+        "logs":            [],
+        "files":           [],
     }
 
     results = {}
@@ -127,6 +128,11 @@ def run_all(target=None):
         table.add_row(tool.title(), f"[{color}]{result}[/{color}]")
 
     console.print(table)
+
+    # Auto run correlation after full scan
+    console.print("\n[bold yellow]Running correlation engine on fresh results...[/bold yellow]")
+    run_correlation_engine()
+
     console.print("\n[yellow]Open dashboard: py siem.py --dashboard[/yellow]\n")
 
 def launch_dashboard():
@@ -148,6 +154,8 @@ def main():
     )
     parser.add_argument("--scan", nargs="+", metavar="TOOL",
         help="Tool to run: network, passwords, files, logs, vulnerabilities, all")
+    parser.add_argument("--correlate", action="store_true",
+        help="Run correlation engine across all tools")
     parser.add_argument("--dashboard", action="store_true",
         help="Launch SIEM web dashboard")
     parser.add_argument("--schedule", action="store_true",
@@ -163,6 +171,9 @@ def main():
 
     if args.help or len(sys.argv) == 1:
         print_help()
+
+    elif args.correlate:
+        run_correlation_engine()
 
     elif args.status:
         generate_status_report()
