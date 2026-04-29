@@ -8,3 +8,13 @@ Incidents: 1
   New service installed AND new files detected in system directories
 
 ============================================================
+============================================================
+Correlation Engine Report
+Generated: 2026-03-24 12:09:07
+Incidents: 1
+============================================================
+
+[CRITICAL] CR002 — Possible Malware Installation
+  New service installed AND new files detected in system directories
+
+============================================================
